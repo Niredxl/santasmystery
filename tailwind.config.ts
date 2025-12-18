@@ -57,6 +57,21 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        christmas: {
+          red: "hsl(var(--christmas-red))",
+          green: "hsl(var(--christmas-green))",
+          gold: "hsl(var(--christmas-gold))",
+          snow: "hsl(var(--christmas-snow))",
+          pine: "hsl(var(--christmas-pine))",
+          holly: "hsl(var(--christmas-holly))",
+        },
+        emotion: {
+          happy: "hsl(var(--emotion-happy))",
+          sad: "hsl(var(--emotion-sad))",
+          thinking: "hsl(var(--emotion-thinking))",
+          listening: "hsl(var(--emotion-listening))",
+          neutral: "hsl(var(--emotion-neutral))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -65,25 +80,40 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
+        "bounce-gentle": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "wiggle": {
+          "0%, 100%": { transform: "rotate(-3deg)" },
+          "50%": { transform: "rotate(3deg)" },
+        },
+        "thinking": {
+          "0%": { transform: "scale(1)" },
+          "25%": { transform: "scale(1.05) rotate(-2deg)" },
+          "50%": { transform: "scale(1)" },
+          "75%": { transform: "scale(1.05) rotate(2deg)" },
+          "100%": { transform: "scale(1)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "bounce-gentle": "bounce-gentle 2s ease-in-out infinite",
+        "wiggle": "wiggle 0.5s ease-in-out infinite",
+        "thinking": "thinking 1.5s ease-in-out infinite",
       },
     },
   },
