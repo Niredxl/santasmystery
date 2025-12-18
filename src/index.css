@@ -2,95 +2,106 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Christmas Theme Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Christmas-themed colors */
+    --background: 150 25% 8%;
+    --foreground: 45 100% 96%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 150 30% 12%;
+    --card-foreground: 45 100% 96%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 150 30% 10%;
+    --popover-foreground: 45 100% 96%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Christmas Red */
+    --primary: 0 72% 50%;
+    --primary-foreground: 45 100% 96%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Christmas Green */
+    --secondary: 140 60% 35%;
+    --secondary-foreground: 45 100% 96%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Gold accent */
+    --accent: 45 90% 55%;
+    --accent-foreground: 150 25% 8%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --muted: 150 20% 18%;
+    --muted-foreground: 150 15% 65%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 45 100% 96%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 150 20% 25%;
+    --input: 150 20% 20%;
+    --ring: 45 90% 55%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Custom Christmas tokens */
+    --christmas-red: 0 72% 50%;
+    --christmas-green: 140 60% 35%;
+    --christmas-gold: 45 90% 55%;
+    --christmas-snow: 200 30% 95%;
+    --christmas-pine: 150 40% 20%;
+    --christmas-holly: 120 50% 30%;
+    
+    /* Character emotion colors */
+    --emotion-happy: 45 90% 55%;
+    --emotion-sad: 210 60% 50%;
+    --emotion-thinking: 270 50% 60%;
+    --emotion-listening: 140 60% 45%;
+    --emotion-neutral: 150 15% 65%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 150 30% 10%;
+    --sidebar-foreground: 45 100% 96%;
+    --sidebar-primary: 0 72% 50%;
+    --sidebar-primary-foreground: 45 100% 96%;
+    --sidebar-accent: 150 30% 15%;
+    --sidebar-accent-foreground: 45 100% 96%;
+    --sidebar-border: 150 20% 25%;
+    --sidebar-ring: 45 90% 55%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 150 25% 6%;
+    --foreground: 45 100% 96%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 150 30% 10%;
+    --card-foreground: 45 100% 96%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 150 30% 8%;
+    --popover-foreground: 45 100% 96%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 72% 50%;
+    --primary-foreground: 45 100% 96%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 140 60% 35%;
+    --secondary-foreground: 45 100% 96%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 45 90% 55%;
+    --accent-foreground: 150 25% 8%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --muted: 150 20% 15%;
+    --muted-foreground: 150 15% 60%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 45 100% 96%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 150 20% 20%;
+    --input: 150 20% 18%;
+    --ring: 45 90% 55%;
+
+    --sidebar-background: 150 30% 8%;
+    --sidebar-foreground: 45 100% 96%;
+    --sidebar-primary: 0 72% 50%;
+    --sidebar-primary-foreground: 45 100% 96%;
+    --sidebar-accent: 150 30% 12%;
+    --sidebar-accent-foreground: 45 100% 96%;
+    --sidebar-border: 150 20% 20%;
+    --sidebar-ring: 45 90% 55%;
   }
 }
 
@@ -101,5 +112,54 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .snowfall {
+    background-image: 
+      radial-gradient(2px 2px at 20px 30px, hsl(var(--christmas-snow)), transparent),
+      radial-gradient(2px 2px at 40px 70px, hsl(var(--christmas-snow) / 0.8), transparent),
+      radial-gradient(1px 1px at 90px 40px, hsl(var(--christmas-snow)), transparent),
+      radial-gradient(2px 2px at 130px 80px, hsl(var(--christmas-snow) / 0.6), transparent),
+      radial-gradient(1px 1px at 160px 30px, hsl(var(--christmas-snow)), transparent);
+    background-size: 200px 200px;
+    animation: snowfall 10s linear infinite;
+  }
+
+  @keyframes snowfall {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 200px; }
+  }
+
+  .glow-gold {
+    box-shadow: 0 0 20px hsl(var(--christmas-gold) / 0.4),
+                0 0 40px hsl(var(--christmas-gold) / 0.2);
+  }
+
+  .glow-red {
+    box-shadow: 0 0 20px hsl(var(--christmas-red) / 0.4),
+                0 0 40px hsl(var(--christmas-red) / 0.2);
+  }
+
+  .glow-green {
+    box-shadow: 0 0 20px hsl(var(--christmas-green) / 0.4),
+                0 0 40px hsl(var(--christmas-green) / 0.2);
+  }
+}
+
+@layer components {
+  .christmas-card {
+    @apply bg-card border border-border rounded-lg p-4;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--christmas-pine)) 100%
+    );
+  }
+
+  .christmas-button {
+    @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200;
+    @apply hover:scale-105 active:scale-95;
   }
 }
