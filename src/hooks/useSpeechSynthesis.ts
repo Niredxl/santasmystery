@@ -9,8 +9,8 @@ interface UseSpeechSynthesisOptions {
 }
 
 export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}) {
-  // Santa-like voice settings: lower pitch, slower rate
-  const { onStart, onEnd, rate = 0.85, pitch = 0.7, volume = 1 } = options;
+  // Deep Santa voice settings: very low pitch, very slow rate
+  const { onStart, onEnd, rate = 0.65, pitch = 0.4, volume = 1 } = options;
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ChristmasCharacter } from '@/components/ChristmasCharacter';
+import { AudioWaveform } from '@/components/AudioWaveform';
 import { useWindowChannel, GameState, CharacterEmotion } from '@/hooks/useWindowChannel';
+import { useAudioVisualizer } from '@/hooks/useAudioVisualizer';
 import { cn } from '@/lib/utils';
 
 const DEFAULT_STATE: GameState = {
@@ -19,6 +21,16 @@ export default function DisplayPage() {
   const [hintText, setHintText] = useState('');
   
   const { subscribe } = useWindowChannel(false);
+  const { isActive: isVisualizerActive, frequencyData, start: startVisualizer, stop: stopVisualizer } = useAudioVisualizer();
+
+  // Start visualizer when game becomes active
+  useEffect(() => {
+    if (gameState.isGameActive && !isVisualizerActive) {
+      startVisualizer();
+    } else if (!gameState.isGameActive && isVisualizerActive) {
+      stopVisualizer();
+    }
+  }, [gameState.isGameActive, isVisualizerActive, startVisualizer, stopVisualizer]);
 
   useEffect(() => {
     const unsubGameState = subscribe('game_state', (state: GameState) => {
@@ -101,10 +113,18 @@ export default function DisplayPage() {
           </div>
         )}
 
-        {/* Character - Now above the text */}
+        {/* Character */}
         <ChristmasCharacter emotion={gameState.emotion} size="lg" />
 
-        {/* Status Text - Now below the character */}
+        {/* Audio Waveform */}
+        {gameState.isGameActive && (
+          <AudioWaveform 
+            frequencyData={frequencyData} 
+            isActive={isVisualizerActive && gameState.emotion === 'listening'} 
+          />
+        )}
+
+        {/* Status Text */}
         <div className="text-center space-y-4">
           <p className="text-xl text-muted-foreground">{gameState.statusText}</p>
           
