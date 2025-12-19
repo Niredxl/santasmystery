@@ -60,7 +60,7 @@ export default function AdminPage() {
   const isProcessingRef = useRef(false);
 
   const { sendGameState, sendEmotion, sendHint, sendCustomDisplay, sendMute } = useWindowChannel(true);
-  const { generateRiddle, evaluateGuess, generateHint, isLoading: isLMLoading } = useLMStudio();
+  const { generateRiddle, handleUserInput, generateHint, isLoading: isLMLoading } = useLMStudio();
   const { speak, stop: stopSpeaking, isSpeaking } = useSpeechSynthesis({
     onEnd: () => {
       // After speaking, go back to listening if game is active
@@ -76,20 +76,25 @@ export default function AdminPage() {
     if (!gameState.isGameActive || isMuted) return;
 
     isProcessingRef.current = true;
-    const guess = processingQueueRef.current.shift()!;
+    const userInput = processingQueueRef.current.shift()!;
 
     setEmotion('thinking');
     setIsProcessing(true);
-    updateGameState({ statusText: `Processing: "${guess}"` });
+    updateGameState({ statusText: `Processing: "${userInput}"` });
 
     try {
-      const { isCorrect, response } = await evaluateGuess(
+      const { isCorrect, response, isQuestion } = await handleUserInput(
         gameState.currentWord,
-        guess,
+        userInput,
         gameState.currentRiddle
       );
 
-      if (isCorrect) {
+      if (isQuestion) {
+        // It was a question, show the answer
+        setEmotion('neutral');
+        updateGameState({ statusText: 'Answered your question!' });
+        speak(response);
+      } else if (isCorrect) {
         setEmotion('happy');
         updateGameState({ statusText: 'Correct! 🎉' });
         speak(`Correct! ${response}`);
@@ -113,7 +118,7 @@ export default function AdminPage() {
       // Process next in queue
       setTimeout(processNextInQueue, 100);
     }
-  }, [gameState.isGameActive, gameState.currentWord, gameState.currentRiddle, isMuted, evaluateGuess, setEmotion, setIsProcessing, updateGameState, speak, endGame]);
+  }, [gameState.isGameActive, gameState.currentWord, gameState.currentRiddle, isMuted, handleUserInput, setEmotion, setIsProcessing, updateGameState, speak, endGame]);
 
   const { isListening, startListening, stopListening, isSupported: speechSupported } = useSpeechRecognition({
     onResult: (transcript) => {
@@ -345,18 +350,18 @@ export default function AdminPage() {
 
                 {!speechSupported && (
                   <div className="p-3 bg-destructive/20 rounded-lg text-destructive">
-                    ⚠️ Speech recognition is not supported in this browser. Please use Chrome.
+                    ⚠️ Microphone access not available. Please allow microphone permissions.
                   </div>
                 )}
 
-                {/* Backup Text Input */}
+                {/* Text Input for Questions & Guesses */}
                 <div className="space-y-2 pt-2 border-t border-border">
-                  <Label className="text-muted-foreground">Backup Text Input (type guess manually)</Label>
+                  <Label className="text-muted-foreground">Ask Questions or Make Guesses</Label>
                   <div className="flex gap-2">
                     <Input
                       value={backupTextInput}
                       onChange={(e) => setBackupTextInput(e.target.value)}
-                      placeholder="Type a guess here..."
+                      placeholder="Ask a question or guess the answer..."
                       disabled={!gameState.isGameActive}
                       onKeyDown={(e) => e.key === 'Enter' && handleBackupTextSubmit()}
                     />
@@ -368,6 +373,9 @@ export default function AdminPage() {
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Examples: "Is it something you eat?" or "candy cane"
+                  </p>
                 </div>
               </CardContent>
             </Card>

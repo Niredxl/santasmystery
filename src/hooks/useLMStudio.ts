@@ -123,6 +123,53 @@ Give a progressively more helpful hint. For hint 1, be subtle. For hint 2, be mo
     return chat(messages);
   }, [chat]);
 
+  // Handle any user input (questions or guesses)
+  const handleUserInput = useCallback(async (
+    secretWord: string,
+    userInput: string,
+    riddle: string
+  ): Promise<{ isCorrect: boolean; response: string; isQuestion: boolean }> => {
+    const messages: LMStudioMessage[] = [
+      {
+        role: 'system',
+        content: `You are a friendly Christmas game host named Santa. The secret word is "${secretWord}". The riddle given was: "${riddle}". 
+
+The player can either:
+1. Ask questions about the riddle (e.g., "Is it something you eat?", "Is it red?", "Can you give me another clue?")
+2. Make a guess at the answer
+
+Determine if the input is a QUESTION or a GUESS:
+- Questions typically start with "is", "are", "can", "does", "what", "how", "why", etc. or end with "?"
+- Guesses are typically single words or short phrases stating an answer
+
+If it's a QUESTION: Answer helpfully without revealing the secret word. You can say yes/no or give hints.
+If it's a GUESS: Evaluate if correct. Consider exact matches, plurals, and close variations as correct.
+
+IMPORTANT: Start your response with one of these tags:
+- [QUESTION] if this is a question (then answer it)
+- [CORRECT] if this is a correct guess (then celebrate!)
+- [INCORRECT] if this is a wrong guess (then give encouragement)
+
+Keep your response brief (1-2 sentences) and festive!`,
+      },
+      {
+        role: 'user',
+        content: userInput,
+      },
+    ];
+
+    const response = await chat(messages);
+    const isCorrect = response.includes('[CORRECT]');
+    const isQuestion = response.includes('[QUESTION]');
+    const cleanResponse = response
+      .replace('[CORRECT]', '')
+      .replace('[INCORRECT]', '')
+      .replace('[QUESTION]', '')
+      .trim();
+    
+    return { isCorrect, response: cleanResponse, isQuestion };
+  }, [chat]);
+
   return {
     isLoading,
     error,
@@ -130,5 +177,6 @@ Give a progressively more helpful hint. For hint 1, be subtle. For hint 2, be mo
     generateRiddle,
     evaluateGuess,
     generateHint,
+    handleUserInput,
   };
 }
