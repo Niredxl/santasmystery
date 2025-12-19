@@ -21,6 +21,7 @@ export default function DisplayPage() {
   const [gameState, setGameState] = useState<GameState>(DEFAULT_STATE);
   const [showHint, setShowHint] = useState(false);
   const [hintText, setHintText] = useState('');
+  const [aiResponse, setAIResponse] = useState('');
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
   
@@ -73,11 +74,16 @@ export default function DisplayPage() {
       setGameState(prev => ({ ...prev, customDisplay: display }));
     });
 
+    const unsubAIResponse = subscribe('ai_response', (response: string) => {
+      setAIResponse(response);
+    });
+
     return () => {
       unsubGameState();
       unsubEmotion();
       unsubHint();
       unsubDisplay();
+      unsubAIResponse();
     };
   }, [subscribe, hintText]);
 
@@ -170,6 +176,17 @@ export default function DisplayPage() {
                 <span className="text-lg font-bold text-christmas-gold">HINT</span>
               </div>
               <p className="text-xl text-foreground">{hintText}</p>
+            </div>
+          )}
+
+          {/* AI Response Display */}
+          {aiResponse && gameState.isGameActive && (
+            <div className="animate-fade-in bg-card/90 backdrop-blur border-2 border-christmas-green rounded-xl p-6 max-w-lg">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="text-2xl">🎅</span>
+                <span className="text-lg font-bold text-christmas-green">Response</span>
+              </div>
+              <p className="text-lg text-foreground text-center">{aiResponse}</p>
             </div>
           )}
 
