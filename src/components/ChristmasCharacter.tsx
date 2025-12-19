@@ -53,23 +53,7 @@ export function ChristmasCharacter({ emotion, size = 'lg', className }: Christma
 
   return (
     <div className={cn('flex flex-col items-center gap-4', className)}>
-      {/* Santa Hat */}
       <div className="relative">
-        {/* Hat */}
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-10">
-          <div className="relative">
-            {/* Hat tip */}
-            <div className="w-8 h-8 bg-christmas-red rounded-full absolute -top-6 right-0 border-4 border-christmas-snow" />
-            {/* Hat cone */}
-            <div 
-              className="w-0 h-0 border-l-[50px] border-r-[50px] border-b-[60px] border-l-transparent border-r-transparent border-b-christmas-red"
-              style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }}
-            />
-            {/* Hat brim */}
-            <div className="w-32 h-6 bg-christmas-snow rounded-full absolute -bottom-2 left-1/2 -translate-x-1/2 shadow-lg" />
-          </div>
-        </div>
-
         {/* Face circle */}
         <div
           className={cn(

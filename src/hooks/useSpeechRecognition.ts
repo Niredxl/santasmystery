@@ -18,7 +18,22 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
   const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isIntentionalStopRef = useRef(false);
-  const lastResultTimeRef = useRef<number>(0);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const accumulatedTranscriptRef = useRef<string>('');
+
+  const clearRestartTimeout = useCallback(() => {
+    if (restartTimeoutRef.current) {
+      clearTimeout(restartTimeoutRef.current);
+      restartTimeoutRef.current = null;
+    }
+  }, []);
+
+  const clearSilenceTimeout = useCallback(() => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -43,15 +58,23 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       setIsListening(false);
       onEnd?.();
       
-      // Auto-restart if not intentionally stopped (for robustness)
+      // Auto-restart if not intentionally stopped
       if (!isIntentionalStopRef.current && recognitionRef.current) {
+        clearRestartTimeout();
         restartTimeoutRef.current = setTimeout(() => {
           try {
             recognitionRef.current?.start();
           } catch (e) {
-            // Already started or other error
+            // Already started or other error - retry after delay
+            restartTimeoutRef.current = setTimeout(() => {
+              try {
+                recognitionRef.current?.start();
+              } catch (e2) {
+                console.error('Failed to restart speech recognition after retry');
+              }
+            }, 500);
           }
-        }, 100);
+        }, 150);
       }
     };
 
@@ -62,13 +85,14 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
-          // Pick the best alternative with highest confidence
+          // Pick the best alternative
           let bestTranscript = result[0].transcript;
-          let bestConfidence = result[0].confidence;
+          let bestConfidence = result[0].confidence || 0;
           
           for (let j = 1; j < result.length; j++) {
-            if (result[j].confidence > bestConfidence) {
-              bestConfidence = result[j].confidence;
+            const altConfidence = result[j].confidence || 0;
+            if (altConfidence > bestConfidence) {
+              bestConfidence = altConfidence;
               bestTranscript = result[j].transcript;
             }
           }
@@ -82,25 +106,51 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       setTranscript(currentTranscript);
 
       if (finalTranscript) {
-        const now = Date.now();
-        // Debounce rapid results (within 300ms)
-        if (now - lastResultTimeRef.current > 300) {
-          lastResultTimeRef.current = now;
-          onResult?.(finalTranscript.trim());
-        }
+        // Accumulate transcript
+        accumulatedTranscriptRef.current += ' ' + finalTranscript;
+        
+        // Reset silence timer - wait for pause in speech before sending
+        clearSilenceTimeout();
+        silenceTimeoutRef.current = setTimeout(() => {
+          const fullTranscript = accumulatedTranscriptRef.current.trim();
+          if (fullTranscript) {
+            onResult?.(fullTranscript);
+            accumulatedTranscriptRef.current = '';
+          }
+        }, 1500); // Wait 1.5s of silence before processing
       }
     };
 
     recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
+      console.warn('Speech recognition error:', event.error);
       
       // Handle specific errors with auto-recovery
-      if (event.error === 'no-speech' || event.error === 'audio-capture' || event.error === 'network') {
-        // These are recoverable - will auto-restart via onend
+      if (event.error === 'no-speech') {
+        // No speech detected - this is normal, just restart
+        setIsListening(false);
+      } else if (event.error === 'audio-capture') {
+        // Microphone issue - wait longer before retry
+        setIsListening(false);
+        clearRestartTimeout();
+        restartTimeoutRef.current = setTimeout(() => {
+          if (!isIntentionalStopRef.current) {
+            try {
+              recognitionRef.current?.start();
+            } catch (e) {
+              console.error('Failed to restart after audio-capture error');
+            }
+          }
+        }, 1000);
+      } else if (event.error === 'network') {
+        // Network issue - retry
         setIsListening(false);
       } else if (event.error === 'aborted') {
-        // Intentional abort, don't restart
+        // Intentional abort
         setIsListening(false);
+      } else if (event.error === 'not-allowed') {
+        // Permission denied
+        setIsListening(false);
+        setIsSupported(false);
       } else {
         setIsListening(false);
       }
@@ -110,49 +160,66 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
 
     return () => {
       isIntentionalStopRef.current = true;
-      if (restartTimeoutRef.current) {
-        clearTimeout(restartTimeoutRef.current);
-      }
+      clearRestartTimeout();
+      clearSilenceTimeout();
       recognition.abort();
     };
-  }, [continuous, interimResults, onResult, onStart, onEnd]);
+  }, [continuous, interimResults, onResult, onStart, onEnd, clearRestartTimeout, clearSilenceTimeout]);
 
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
       isIntentionalStopRef.current = false;
       setTranscript('');
-      try {
-        recognitionRef.current.start();
-      } catch (e) {
-        // Already started - try stopping and restarting
-        try {
-          recognitionRef.current.stop();
-          setTimeout(() => {
+      accumulatedTranscriptRef.current = '';
+      
+      // Request microphone permission first
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(() => {
+          try {
+            recognitionRef.current?.start();
+          } catch (e) {
+            // Already started - stop and restart
             try {
-              recognitionRef.current?.start();
+              recognitionRef.current?.stop();
+              setTimeout(() => {
+                try {
+                  recognitionRef.current?.start();
+                } catch (e2) {
+                  console.error('Failed to restart speech recognition');
+                }
+              }, 200);
             } catch (e2) {
               console.error('Failed to restart speech recognition');
             }
-          }, 100);
-        } catch (e2) {
-          console.error('Failed to restart speech recognition');
-        }
-      }
+          }
+        })
+        .catch((err) => {
+          console.error('Microphone permission denied:', err);
+          setIsSupported(false);
+        });
     }
   }, [isListening]);
 
   const stopListening = useCallback(() => {
     isIntentionalStopRef.current = true;
-    if (restartTimeoutRef.current) {
-      clearTimeout(restartTimeoutRef.current);
+    clearRestartTimeout();
+    clearSilenceTimeout();
+    
+    // Send any accumulated transcript
+    const fullTranscript = accumulatedTranscriptRef.current.trim();
+    if (fullTranscript) {
+      onResult?.(fullTranscript);
+      accumulatedTranscriptRef.current = '';
     }
+    
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
     }
-  }, [isListening]);
+  }, [isListening, clearRestartTimeout, clearSilenceTimeout, onResult]);
 
   const resetTranscript = useCallback(() => {
     setTranscript('');
+    accumulatedTranscriptRef.current = '';
   }, []);
 
   return {
