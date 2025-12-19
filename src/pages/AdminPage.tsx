@@ -56,6 +56,8 @@ export default function AdminPage() {
   const [customDisplayContent, setCustomDisplayContent] = useState('');
   const [tempWordList, setTempWordList] = useState(params.wordList.join('\n'));
   const [backupTextInput, setBackupTextInput] = useState('');
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
   const processingQueueRef = useRef<string[]>([]);
   const isProcessingRef = useRef(false);
 
@@ -134,6 +136,31 @@ export default function AdminPage() {
       }
     },
   });
+
+  // Fetch available audio devices
+  useEffect(() => {
+    const fetchDevices = async () => {
+      try {
+        // Request permission first to get device labels
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(d => d.kind === 'audioinput');
+        setAudioDevices(audioInputs);
+        if (audioInputs.length > 0 && !selectedDeviceId) {
+          setSelectedDeviceId(audioInputs[0].deviceId);
+        }
+      } catch (err) {
+        console.error('Could not enumerate devices:', err);
+      }
+    };
+    fetchDevices();
+
+    // Listen for device changes
+    navigator.mediaDevices.addEventListener('devicechange', fetchDevices);
+    return () => {
+      navigator.mediaDevices.removeEventListener('devicechange', fetchDevices);
+    };
+  }, [selectedDeviceId]);
 
   // Sync game state to user display window
   useEffect(() => {
@@ -320,6 +347,26 @@ export default function AdminPage() {
                       </>
                     )}
                   </Button>
+
+                  {/* Audio Device Selector */}
+                  <Select value={selectedDeviceId} onValueChange={setSelectedDeviceId}>
+                    <SelectTrigger className="w-[180px] h-11 bg-background border-border">
+                      <Mic className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Select microphone" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border z-50">
+                      {audioDevices.map((device) => (
+                        <SelectItem key={device.deviceId} value={device.deviceId}>
+                          {device.label || `Microphone ${audioDevices.indexOf(device) + 1}`}
+                        </SelectItem>
+                      ))}
+                      {audioDevices.length === 0 && (
+                        <SelectItem value="none" disabled>
+                          No microphones found
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
 
                   <Button
                     onClick={handleGiveHint}
