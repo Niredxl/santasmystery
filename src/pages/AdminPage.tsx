@@ -58,12 +58,13 @@ export default function AdminPage() {
   const [backupTextInput, setBackupTextInput] = useState('');
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+  const [lastAIResponse, setLastAIResponse] = useState<string>('');
   const processingQueueRef = useRef<string[]>([]);
   const isProcessingRef = useRef(false);
 
   const { sendGameState, sendEmotion, sendHint, sendCustomDisplay, sendMute } = useWindowChannel(true);
   const { generateRiddle, handleUserInput, generateHint, isLoading: isLMLoading } = useLMStudio();
-  const { speak, stop: stopSpeaking, isSpeaking } = useSpeechSynthesis({
+  const { speak, stop: stopSpeaking, isSpeaking, voices, selectedVoice, setSelectedVoice } = useSpeechSynthesis({
     onEnd: () => {
       // After speaking, go back to listening if game is active
       if (gameState.isGameActive && !isMuted) {
@@ -91,6 +92,8 @@ export default function AdminPage() {
         gameState.currentRiddle
       );
 
+      setLastAIResponse(response);
+      
       if (isQuestion) {
         // It was a question, show the answer
         setEmotion('neutral');
@@ -368,6 +371,21 @@ export default function AdminPage() {
                     </SelectContent>
                   </Select>
 
+                  {/* Voice Selector */}
+                  <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                    <SelectTrigger className="w-[180px] h-11 bg-background border-border">
+                      <Volume2 className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Select voice" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border z-50 max-h-60">
+                      {voices.filter(v => v.lang.startsWith('en')).map((voice) => (
+                        <SelectItem key={voice.name} value={voice.name}>
+                          {voice.name.length > 25 ? voice.name.substring(0, 25) + '...' : voice.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   <Button
                     onClick={handleGiveHint}
                     disabled={!gameState.isGameActive || gameState.hintsRemaining <= 0}
@@ -454,10 +472,18 @@ export default function AdminPage() {
                       "{gameState.currentRiddle}"
                     </p>
                   </div>
-                  <div>
+                <div>
                     <Label className="text-muted-foreground">Status</Label>
                     <p className="text-lg text-foreground">{gameState.statusText}</p>
                   </div>
+                  {lastAIResponse && (
+                    <div>
+                      <Label className="text-muted-foreground">Last AI Response</Label>
+                      <p className="text-lg text-foreground bg-christmas-green/20 p-3 rounded-lg border border-christmas-green/30">
+                        "{lastAIResponse}"
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
