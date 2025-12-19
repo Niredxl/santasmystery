@@ -24,7 +24,9 @@ import {
   ExternalLink,
   Volume2,
   VolumeX,
+  Send,
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { useGame, GameParams } from '@/contexts/GameContext';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
@@ -53,6 +55,7 @@ export default function AdminPage() {
   const [customDisplayType, setCustomDisplayType] = useState<'text' | 'image' | 'video'>('text');
   const [customDisplayContent, setCustomDisplayContent] = useState('');
   const [tempWordList, setTempWordList] = useState(params.wordList.join('\n'));
+  const [backupTextInput, setBackupTextInput] = useState('');
   const processingQueueRef = useRef<string[]>([]);
   const isProcessingRef = useRef(false);
 
@@ -236,6 +239,14 @@ export default function AdminPage() {
     toast({ title: 'Parameters saved' });
   };
 
+  const handleBackupTextSubmit = () => {
+    if (!backupTextInput.trim() || !gameState.isGameActive) return;
+    processingQueueRef.current.push(backupTextInput.trim());
+    setBackupTextInput('');
+    processNextInQueue();
+    toast({ title: 'Text submitted', description: `Processing: "${backupTextInput.trim()}"` });
+  };
+
   return (
     <div className="min-h-screen bg-background p-6 snowfall">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -337,6 +348,27 @@ export default function AdminPage() {
                     ⚠️ Speech recognition is not supported in this browser. Please use Chrome.
                   </div>
                 )}
+
+                {/* Backup Text Input */}
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <Label className="text-muted-foreground">Backup Text Input (type guess manually)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={backupTextInput}
+                      onChange={(e) => setBackupTextInput(e.target.value)}
+                      placeholder="Type a guess here..."
+                      disabled={!gameState.isGameActive}
+                      onKeyDown={(e) => e.key === 'Enter' && handleBackupTextSubmit()}
+                    />
+                    <Button
+                      onClick={handleBackupTextSubmit}
+                      disabled={!gameState.isGameActive || !backupTextInput.trim()}
+                      size="icon"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 

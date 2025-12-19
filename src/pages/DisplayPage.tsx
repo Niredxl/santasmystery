@@ -101,10 +101,10 @@ export default function DisplayPage() {
           </div>
         )}
 
-        {/* Character */}
+        {/* Character - Now above the text */}
         <ChristmasCharacter emotion={gameState.emotion} size="lg" />
 
-        {/* Status Text */}
+        {/* Status Text - Now below the character */}
         <div className="text-center space-y-4">
           <p className="text-xl text-muted-foreground">{gameState.statusText}</p>
           
