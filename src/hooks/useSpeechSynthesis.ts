@@ -10,10 +10,11 @@ interface UseSpeechSynthesisOptions {
 
 export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}) {
   // Deep Santa voice settings: very low pitch, very slow rate
-  const { onStart, onEnd, rate = 0.65, pitch = 0.4, volume = 1 } = options;
+  const { onStart, onEnd, rate = 0.75, pitch = 0.6, volume = 1 } = options;
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<string>('');
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
@@ -41,52 +42,20 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}) {
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
-    // Add Santa-like flair to the text
-    const santaText = text;
-
-    const utterance = new SpeechSynthesisUtterance(santaText);
+    const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = rate;
     utterance.pitch = pitch;
     utterance.volume = volume;
 
-    // Find a deep male voice for Santa-like effect
-    if (voiceName) {
-      const voice = voices.find(v => v.name === voiceName);
+    // Use selected voice or provided voiceName
+    const voiceToUse = voiceName || selectedVoice;
+    if (voiceToUse) {
+      const voice = voices.find(v => v.name === voiceToUse);
       if (voice) utterance.voice = voice;
     } else {
-      // Prefer deeper male voices for Santa effect
-      const preferredVoices = [
-        'Google UK English Male',
-        'Microsoft David',
-        'Daniel',
-        'Alex',
-        'Fred',
-        'Google US English',
-      ];
-      
-      let selectedVoice = null;
-      for (const preferred of preferredVoices) {
-        selectedVoice = voices.find(v => v.name.includes(preferred));
-        if (selectedVoice) break;
-      }
-      
-      // Fallback to any male English voice
-      if (!selectedVoice) {
-        selectedVoice = voices.find(v => 
-          v.lang.startsWith('en') && 
-          (v.name.toLowerCase().includes('male') || 
-           v.name.includes('David') || 
-           v.name.includes('Daniel') ||
-           v.name.includes('James'))
-        );
-      }
-      
-      // Final fallback to any English voice
-      if (!selectedVoice) {
-        selectedVoice = voices.find(v => v.lang.startsWith('en'));
-      }
-      
-      if (selectedVoice) utterance.voice = selectedVoice;
+      // Fallback to any English voice if none selected
+      const englishVoice = voices.find(v => v.lang.startsWith('en'));
+      if (englishVoice) utterance.voice = englishVoice;
     }
 
     utterance.onstart = () => {
@@ -106,7 +75,7 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}) {
 
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-  }, [rate, pitch, volume, voices, onStart, onEnd]);
+  }, [rate, pitch, volume, voices, selectedVoice, onStart, onEnd]);
 
   const stop = useCallback(() => {
     if (window.speechSynthesis) {
@@ -131,6 +100,8 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}) {
     isSpeaking,
     isSupported,
     voices,
+    selectedVoice,
+    setSelectedVoice,
     speak,
     stop,
     pause,
