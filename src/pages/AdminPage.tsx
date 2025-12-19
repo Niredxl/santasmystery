@@ -29,7 +29,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useGame, GameParams } from '@/contexts/GameContext';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
-import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
+import { usePiperTTS } from '@/hooks/usePiperTTS';
 import { useLMStudio } from '@/hooks/useLMStudio';
 import { useWindowChannel, openUserDisplay, CharacterEmotion } from '@/hooks/useWindowChannel';
 import { ChristmasCharacter } from '@/components/ChristmasCharacter';
@@ -62,9 +62,9 @@ export default function AdminPage() {
   const processingQueueRef = useRef<string[]>([]);
   const isProcessingRef = useRef(false);
 
-  const { sendGameState, sendEmotion, sendHint, sendCustomDisplay, sendMute } = useWindowChannel(true);
+  const { sendGameState, sendEmotion, sendHint, sendCustomDisplay, sendMute, sendAIResponse } = useWindowChannel(true);
   const { generateRiddle, handleUserInput, generateHint, isLoading: isLMLoading } = useLMStudio();
-  const { speak, stop: stopSpeaking, isSpeaking, voices, selectedVoice, setSelectedVoice } = useSpeechSynthesis({
+  const { speak, stop: stopSpeaking, isSpeaking, isPiperReady, useFallback, downloadProgress, isLoading: isTTSLoading } = usePiperTTS({
     onEnd: () => {
       // After speaking, go back to listening if game is active
       if (gameState.isGameActive && !isMuted) {
@@ -93,6 +93,7 @@ export default function AdminPage() {
       );
 
       setLastAIResponse(response);
+      sendAIResponse(response);
       
       if (isQuestion) {
         // It was a question, show the answer
@@ -123,7 +124,7 @@ export default function AdminPage() {
       // Process next in queue
       setTimeout(processNextInQueue, 100);
     }
-  }, [gameState.isGameActive, gameState.currentWord, gameState.currentRiddle, isMuted, handleUserInput, setEmotion, setIsProcessing, updateGameState, speak, endGame]);
+  }, [gameState.isGameActive, gameState.currentWord, gameState.currentRiddle, isMuted, handleUserInput, setEmotion, setIsProcessing, updateGameState, speak, endGame, sendAIResponse]);
 
   const { isListening, startListening, stopListening, isSupported: speechSupported } = useSpeechRecognition({
     onResult: (transcript) => {
@@ -371,20 +372,17 @@ export default function AdminPage() {
                     </SelectContent>
                   </Select>
 
-                  {/* Voice Selector */}
-                  <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                    <SelectTrigger className="w-[180px] h-11 bg-background border-border">
-                      <Volume2 className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <SelectValue placeholder="Select voice" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border z-50 max-h-60">
-                      {voices.filter(v => v.lang.startsWith('en')).map((voice) => (
-                        <SelectItem key={voice.name} value={voice.name}>
-                          {voice.name.length > 25 ? voice.name.substring(0, 25) + '...' : voice.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {/* Piper TTS Status */}
+                  <div className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg h-11">
+                    <Volume2 className="h-4 w-4 text-muted-foreground" />
+                    {isTTSLoading ? (
+                      <span className="text-sm text-muted-foreground">Downloading voice... {downloadProgress}%</span>
+                    ) : isPiperReady && !useFallback ? (
+                      <span className="text-sm text-christmas-green">Piper (Norman)</span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Browser Voice</span>
+                    )}
+                  </div>
 
                   <Button
                     onClick={handleGiveHint}

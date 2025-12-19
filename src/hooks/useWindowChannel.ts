@@ -18,7 +18,7 @@ export interface GameState {
 }
 
 export interface ChannelMessage {
-  type: 'game_state' | 'start_game' | 'give_hint' | 'set_emotion' | 'set_display' | 'mute' | 'ping' | 'pong';
+  type: 'game_state' | 'start_game' | 'give_hint' | 'set_emotion' | 'set_display' | 'mute' | 'ping' | 'pong' | 'ai_response';
   payload?: any;
 }
 
@@ -79,6 +79,10 @@ export function useWindowChannel(isAdmin: boolean) {
     send({ type: 'mute' });
   }, [send]);
 
+  const sendAIResponse = useCallback((response: string) => {
+    send({ type: 'ai_response', payload: response });
+  }, [send]);
+
   return {
     send,
     subscribe,
@@ -87,6 +91,7 @@ export function useWindowChannel(isAdmin: boolean) {
     sendHint,
     sendCustomDisplay,
     sendMute,
+    sendAIResponse,
   };
 }
 
