@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ChristmasCharacter } from '@/components/ChristmasCharacter';
 import { AudioWaveform } from '@/components/AudioWaveform';
 import { useWindowChannel, GameState, CharacterEmotion } from '@/hooks/useWindowChannel';
 import { useAudioVisualizer } from '@/hooks/useAudioVisualizer';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Mic } from 'lucide-react';
 
 const DEFAULT_STATE: GameState = {
   isGameActive: false,
@@ -19,18 +21,32 @@ export default function DisplayPage() {
   const [gameState, setGameState] = useState<GameState>(DEFAULT_STATE);
   const [showHint, setShowHint] = useState(false);
   const [hintText, setHintText] = useState('');
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   
   const { subscribe } = useWindowChannel(false);
   const { isActive: isVisualizerActive, frequencyData, start: startVisualizer, stop: stopVisualizer } = useAudioVisualizer();
 
-  // Start visualizer when game becomes active
+  // Manual audio enable (required for user gesture in modern browsers)
+  const handleEnableAudio = useCallback(async () => {
+    try {
+      setAudioError(null);
+      await startVisualizer();
+      setAudioEnabled(true);
+    } catch (error) {
+      console.error('Failed to enable audio:', error);
+      setAudioError('Could not access microphone. Please allow microphone permissions.');
+    }
+  }, [startVisualizer]);
+
+  // Auto-start visualizer when game becomes active (if already enabled)
   useEffect(() => {
-    if (gameState.isGameActive && !isVisualizerActive) {
+    if (gameState.isGameActive && audioEnabled && !isVisualizerActive) {
       startVisualizer();
     } else if (!gameState.isGameActive && isVisualizerActive) {
-      stopVisualizer();
+      // Don't stop - keep audio running for smooth experience
     }
-  }, [gameState.isGameActive, isVisualizerActive, startVisualizer, stopVisualizer]);
+  }, [gameState.isGameActive, audioEnabled, isVisualizerActive, startVisualizer]);
 
   useEffect(() => {
     const unsubGameState = subscribe('game_state', (state: GameState) => {
@@ -116,8 +132,26 @@ export default function DisplayPage() {
         {/* Character */}
         <ChristmasCharacter emotion={gameState.emotion} size="lg" />
 
+        {/* Enable Audio Button (required for user gesture) */}
+        {!audioEnabled && (
+          <div className="flex flex-col items-center gap-2">
+            <Button 
+              onClick={handleEnableAudio}
+              size="lg"
+              className="bg-christmas-green hover:bg-christmas-green/80 animate-pulse"
+            >
+              <Mic className="mr-2 h-5 w-5" />
+              Enable Microphone
+            </Button>
+            {audioError && (
+              <p className="text-destructive text-sm">{audioError}</p>
+            )}
+            <p className="text-muted-foreground text-sm">Click to enable audio visualization</p>
+          </div>
+        )}
+
         {/* Audio Waveform */}
-        {gameState.isGameActive && (
+        {audioEnabled && gameState.isGameActive && (
           <AudioWaveform 
             frequencyData={frequencyData} 
             isActive={isVisualizerActive && gameState.emotion === 'listening'} 
