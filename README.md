@@ -1,4 +1,5 @@
-# Welcome to your Lovable project
+# A short venture into vibe coding
+not really fun is it
 
 ## Project info
 
